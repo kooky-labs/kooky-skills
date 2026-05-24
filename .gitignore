@@ -1,0 +1,16 @@
+# Per-environment state — not part of the canonical repo
+MEMORY.md
+memory/
+
+# macOS noise
+.DS_Store
+
+# Editor noise
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local-only env files (never commit secrets)
+.env
+.env.local
