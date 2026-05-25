@@ -5,6 +5,8 @@ description: >
   an authentic build-in-public founder voice. Use when a topic, event, or
   decision needs to become a post on a specific platform — the skill turns the
   raw input into platform-tuned copy with the right length, hook, and constraints.
+  For marketing copy fragments (landing pages, emails, ads) use `copywriting`
+  instead; for content calendar planning use `planning-content`.
 version: 1.0.0
 owner: HOUDINI
 status: active
@@ -34,7 +36,9 @@ Platform-native means writing to the platform's actual conventions — not pasti
 - A topic, decision, or result needs to become a social post (specific platform identified).
 - Adapting one piece of content across multiple platforms (each gets its own native draft, not a copy-paste).
 - Drafting threads, reels, or single posts from a raw idea.
-- Anchoring content to one of the four founder-voice pillars: Founder's Journey (40%), Behind-the-Scenes Ops (25%), Case Studies & Proof (20%), Industry Hot Takes (15%).
+- Anchoring content to one of the four founder-voice pillars using the current 2026-Q2 mix: Case Studies & Proof (35%), Industry Hot Takes (30%), Founder's Journey (20%), Behind-the-Scenes Ops (15%).
+
+> **Pillar mix note:** values current as of 2026-Q2. Scheduled revisit after 2026-06-26. Previous mix: 40/25/20/15 (Founder's / BTS / Case Studies / Hot Takes).
 
 Do **not** use this skill when:
 

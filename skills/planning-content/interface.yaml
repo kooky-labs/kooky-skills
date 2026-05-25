@@ -1,0 +1,81 @@
+name: planning-content
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface (what a caller can ask
+# the skill to produce), not an HTTP endpoint. Returns calendar/strategy structures.
+exposes:
+  - capability: content.plan_calendar
+    description: Plan a content calendar across platforms and pillars for a given time horizon and business objective
+    parameters:
+      time_horizon:
+        type: string
+        required: true
+        enum: [week, month, quarter]
+        description: Planning window — determines output shape (weekly grid / monthly calendar / quarterly strategy)
+      business_objective:
+        type: string
+        required: true
+        enum: [audience_growth, lead_generation, brand_awareness, product_launch, retention]
+        description: What the plan should optimize for — shapes pillar allocation and platform emphasis
+      active_platforms:
+        type: array
+        required: true
+        description: List of platforms to plan across (e.g., ["x", "linkedin", "tiktok", "instagram"])
+      pillar_emphasis_override:
+        type: object
+        required: false
+        description: Optional override of the default 2026-Q2 pillar mix (35/30/20/15 Case Studies / Hot Takes / Founder's Journey / BTS); pass as object with pillar keys and percentage values summing to 100
+      production_capacity:
+        type: string
+        required: false
+        description: Operator's known weekly capacity (e.g., "3 posts/week max") — prevents over-committing
+    returns:
+      plan_type:
+        type: string
+        enum: [weekly_plan, monthly_calendar, quarterly_strategy]
+        description: Shape of the returned plan
+      plan_content:
+        type: string
+        description: The structured plan output (markdown table for weekly; week-by-week breakdown for monthly; narrative for quarterly)
+      pillar_allocation:
+        type: object
+        description: Final pillar percentages used in the plan (matches default or override)
+      reserved_capacity_pct:
+        type: number
+        description: Percentage of capacity reserved for reactive/trending content (default 20)
+      metric_targets:
+        type: array
+        description: Per-platform measurable targets aligned to the business objective
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  content.plan_calendar:
+    supports_horizons:
+      - week
+      - month
+      - quarter
+    supports_objectives:
+      - audience_growth
+      - lead_generation
+      - brand_awareness
+      - product_launch
+      - retention
+    supports_platforms:
+      - x
+      - linkedin
+      - tiktok
+      - instagram
+    supports_locales:
+      - en
+    supports_pillar_override: true        # operator can override default mix per campaign
+    supports_drafting: false              # plans only; drafting belongs to copywriting or creating-social-content
+    supports_publishing: false            # planning only; publishing is a separate connector skill

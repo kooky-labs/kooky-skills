@@ -23,7 +23,7 @@ exposes:
         required: false
         enum: [founders-journey, behind-the-scenes, case-study, hot-take]
         default: founders-journey
-        description: Founder-voice content pillar (40/25/20/15 mix across these four)
+        description: Founder-voice content pillar — current 2026-Q2 mix is Case Studies 35% / Hot Takes 30% / Founder's Journey 20% / BTS 15%
       audience_note:
         type: string
         required: false

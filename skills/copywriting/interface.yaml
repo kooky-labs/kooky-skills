@@ -1,0 +1,74 @@
+name: copywriting
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface (what a caller can ask
+# the skill to produce), not an HTTP endpoint. Returns finished copy + variants.
+exposes:
+  - capability: content.draft_marketing_copy
+    description: Draft marketing copy fragments (headlines, body, CTAs, subject lines, taglines) for a specific destination and audience
+    parameters:
+      copy_type:
+        type: string
+        required: true
+        enum: [headline, body, cta, email_subject, email_body, product_description, tagline]
+        description: Type of copy needed — determines the framework, length budget, and whether A/B variants are produced
+      placement_context:
+        type: string
+        required: true
+        description: Where the copy ships (landing page section, email step, ad placement, product page)
+      target_audience:
+        type: string
+        required: true
+        description: Who the copy is for (e.g., "early-stage founders evaluating AI tools", "enterprise buyers")
+      desired_action:
+        type: string
+        required: false
+        description: What the reader should do next (click, sign up, reply, buy) — shapes the CTA and tone
+      current_copy:
+        type: string
+        required: false
+        description: Existing copy to rewrite/improve (omit for fresh drafts)
+    returns:
+      final_copy:
+        type: string
+        description: Ready-to-paste copy, formatted for its destination
+      variants:
+        type: array
+        description: 2-3 A/B variants (only populated for headlines and email_subject; empty otherwise)
+      char_count:
+        type: number
+        description: Character count of final_copy (relevant for headlines / subject lines / ad copy)
+      rationale:
+        type: array
+        description: One-line rationale per key creative choice
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+  brand_voice_path:
+    type: string
+    required: false
+    description: Optional path to a brand-voice file the caller maintains (skill reads it for tone boundaries)
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  content.draft_marketing_copy:
+    supports_copy_types:
+      - headline
+      - body
+      - cta
+      - email_subject
+      - email_body
+      - product_description
+      - tagline
+    supports_locales:
+      - en
+    supports_ab_variants: true            # for headlines and email_subject only
+    supports_batch_drafting: false        # one copy unit per invocation
+    supports_publishing: false            # drafting only; publishing is a separate connector skill
+    supports_paid_ad_compliance: false    # brand voice enforced; regulated-claim compliance is operator's job
