@@ -1,0 +1,72 @@
+name: auditing-skill-security
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface (what a caller can ask
+# the skill to audit), not an HTTP endpoint. Returns a structured audit report.
+exposes:
+  - capability: skill.audit_security
+    description: Runtime-safety audit for a skill before installation; returns verdict + per-dimension scores + findings
+    parameters:
+      skill_path:
+        type: string
+        required: true
+        description: Path to the skill being audited (the skill's directory containing SKILL.md and any companion files)
+      tier:
+        type: string
+        required: true
+        enum: [A, B]
+        description: A = internal/curated source; B = community/marketplace/third-party source (runs 3 additional dimensions)
+      compliance_checker_passed:
+        type: boolean
+        required: true
+        description: Confirmation that the automated SPEC compliance checker passed upstream — this audit assumes format compliance is already verified
+      context:
+        type: string
+        required: false
+        description: Optional additional context about the install target (runtime environment, permission scope, what the skill will be installed on)
+    returns:
+      verdict:
+        type: string
+        enum: [APPROVED, CONDITIONAL, REJECTED]
+        description: The single-word verdict
+      tier:
+        type: string
+        enum: [A, B]
+        description: Echoes the input tier for downstream routing
+      dimension_scores:
+        type: object
+        description: Per-dimension scores 1-5; keys depend on tier (4 keys for A; 7 keys for B)
+      weighted_average:
+        type: number
+        description: Weighted average across all dimensions for the tier
+      findings:
+        type: array
+        description: List of {severity, dimension, description, action} objects; severity in CRITICAL/HIGH/MEDIUM/LOW
+      conditions:
+        type: array
+        description: List of operator actions required pre-install (only populated when verdict is CONDITIONAL); empty otherwise
+      rationale:
+        type: string
+        description: 1-2 sentences justifying the verdict
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  skill.audit_security:
+    supports_tiers:
+      - A
+      - B
+    supports_locales:
+      - en
+    supports_batch_audit: false           # one skill per invocation; caller batches if needed
+    supports_runtime_inspection: false    # audit is static-only (SKILL.md + companion files); does not execute the skill
+    supports_format_compliance_check: false  # format compliance is the upstream automated checker's job
+    supports_install_action: false        # audit only; installation is a separate operator action

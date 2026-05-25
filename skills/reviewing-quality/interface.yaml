@@ -1,0 +1,70 @@
+name: reviewing-quality
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface (what a caller can ask
+# the skill to evaluate), not an HTTP endpoint. Returns a structured review.
+exposes:
+  - capability: quality.review_deliverable
+    description: Review a deliverable across five dimensions and return a verdict + findings + at least one strength
+    parameters:
+      deliverable_type:
+        type: string
+        required: true
+        enum: [content, code, agent_output, business_material]
+        description: Category of deliverable — determines which dimensions apply (Technical Accuracy is code-only)
+      deliverable_content:
+        type: string
+        required: true
+        description: The actual thing being reviewed (text body, code, output transcript, document content)
+      author:
+        type: string
+        required: false
+        description: Optional author identifier — used for context, never affects severity classification
+      intended_audience:
+        type: string
+        required: false
+        description: Who the deliverable is for (e.g., "early-stage founders", "internal team", "paying customers")
+      context:
+        type: string
+        required: false
+        description: What this deliverable is being used for (the situation it ships into)
+    returns:
+      verdict:
+        type: string
+        enum: [PASS, PASS_WITH_CHANGES, FAIL]
+        description: The single-word verdict
+      rationale:
+        type: string
+        description: 1-2 sentences justifying the verdict
+      findings:
+        type: array
+        description: List of {severity, dimension, description, fix} objects; severity in BLOCK/MAJOR/MINOR/NOTE
+      strengths:
+        type: array
+        description: At least one identified strength — never empty
+      next_step:
+        type: string
+        description: Specific recommendation (fix order, who to escalate to, what to re-review)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  quality.review_deliverable:
+    supports_types:
+      - content
+      - code
+      - agent_output
+      - business_material
+    supports_locales:
+      - en
+    supports_batch_review: false        # one deliverable per invocation
+    supports_rewrite: false             # never rewrites the deliverable; returns fix instructions only
+    supports_automated_fixes: false     # human applies the fixes

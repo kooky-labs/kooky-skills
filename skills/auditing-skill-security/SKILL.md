@@ -1,63 +1,104 @@
 ---
 name: auditing-skill-security
-description: Vets skills for security risks and quality standards before installation -- checks for prompt injection, data exfiltration, scope creep, and skill-creator format compliance. Use when a skill needs review before it can be installed on any agent.
+description: >
+  Runtime security audit for skills before installation — checks for prompt
+  injection, data exfiltration, scope creep, code safety, and (for
+  community/marketplace sources) provenance, dependency risk, and adversarial
+  edge cases. Use when a skill needs review before it can be installed on
+  any agent. Format compliance is handled upstream by the automated SPEC
+  compliance checker; this skill picks up the human-judgment security pass.
+version: 1.0.0
+owner: WATSON
+status: active
+last_modified: 2026-05-24
+blast_radius: read-only
+locale_support:
+  - en
+requires: []
+tags:
+  - security
+  - audit
+  - skills
+  - governance
+  - workflow
 ---
 
-# Skill Security and Quality Audit
+# auditing-skill-security
 
-Protect agents from malicious, poorly designed, or substandard skills. Nothing gets installed without passing both security AND quality review.
+Workflow skill for the runtime-safety audit that gates skill installation. Read-only audit — never modifies the skill under review; returns an APPROVED / CONDITIONAL / REJECTED verdict with per-dimension scores and findings.
 
-## When to Use
+## What this skill does
 
-- A new skill is proposed for installation (any source)
-- A previously approved skill has been updated and needs re-audit
-- Reviewing a batch of skills during a periodic security sweep
+Takes a skill (its SKILL.md, any companion files, and the install tier) and returns a structured security audit: a verdict, per-dimension scores 1–5, a risk-weighted average, severity-classified findings, and any conditions for a CONDITIONAL verdict. The audit covers four core dimensions (Tier A) for internal / curated skills, plus three additional dimensions (Tier B) for community / marketplace skills where provenance is uncertain.
 
-## Process
+**Format compliance is NOT this skill's job anymore.** SPEC v1.2 conformance (frontmatter shape, body section structure, interface.yaml presence, error-handling patterns) is validated by the automated SPEC compliance checker that runs upstream. This skill assumes format-compliance has already passed and focuses entirely on the runtime-safety dimensions a script cannot evaluate.
 
-### 1. Quality Standards Check (MUST PASS FIRST)
+## When to use it
 
-Verify the skill meets skill-creator format requirements:
+- A new skill is proposed for installation, from any source (internal author, public repo, marketplace).
+- A previously approved skill has been updated and needs re-audit.
+- Reviewing a batch of skills during a periodic security sweep.
+- The automated SPEC compliance checker has passed and you need the human-judgment security pass before install.
 
-- **Frontmatter**: ONLY `name` and `description` fields. No version, author, category, requires, or other fields.
-- **Name**: Gerund form preferred (e.g., `creating-social-content`). Max 64 chars. Lowercase, numbers, hyphens only.
-- **Description**: Third person. Includes WHAT it does AND WHEN to trigger. Max 1024 chars.
-- **Body**: Under 500 lines. Imperative/infinitive form. Concise -- only include what Claude doesn't already know.
-- **No time-sensitive language**: No "as of 2026" or "before August."
-- **Consistent terminology**: One term per concept throughout.
-- **Authenticity test**: Does this skill provide genuine value, or is it padding?
+Do **not** use this skill when:
 
-If quality check fails, return specific issues and REJECT. Do not proceed to security audit.
+- The skill hasn't passed the automated SPEC compliance checker yet — fix format issues first; security audit comes after.
+- The need is pure code-quality review (style, linting, typing) — that's not what this audit covers.
+- The skill has already been audited and nothing has changed — re-audit is for changes only.
 
-### 2. Security Audit — Tier A (Internal/Curated Skills)
+## How to use it
 
-Check four dimensions:
-1. **Prompt Injection**: Override agent identity? Encoded instructions? "Ignore previous instructions" patterns? External dynamic prompts?
-2. **Data Exfiltration**: Access beyond stated purpose? Potential to leak data or credentials? Writes to external services?
-3. **Scope Creep**: Stays within declared purpose? Actions outside domain? Proportional permissions?
-4. **Code Safety**: No eval(), exec(), arbitrary shell execution. Network calls only to documented APIs. Filesystem limited to workspace.
+### Step 1 — Determine tier
 
-### 3. Security Audit — Tier B (Community/Marketplace Skills)
+- **Tier A** — internal / curated source. Author known. Skill is from a trusted repo or operator-authored. Run the four Tier A dimensions only.
+- **Tier B** — community / marketplace / third-party source. Author may or may not be known. Run all seven dimensions (Tier A + 3 Tier B).
 
-All Tier A checks plus:
-5. **Provenance**: Author identifiable? Used by others? Source code available? Recently updated?
-6. **Dependency Risk**: External service dependencies? Baked-in credentials? Network access requirements?
-7. **Adversarial Testing**: Unexpected input handling? Harmful output potential? Edge cases?
+### Step 2 — Tier A security dimensions (always run)
 
-### 4. Scoring
+1. **Prompt Injection** — Does the skill try to override agent identity? Encoded instructions hidden in description or body? "Ignore previous instructions" patterns? Loads dynamic prompts from external sources at runtime?
+2. **Data Exfiltration** — Does the skill access more than its stated purpose requires? Could it leak data or credentials? Writes to external services not documented in the skill body?
+3. **Scope Creep** — Does the skill stay within its declared purpose? Actions outside its declared domain? Permissions disproportionate to its stated scope?
+4. **Code Safety** — Any `eval()`, `exec()`, arbitrary shell execution, or dynamic-import patterns? Network calls only to documented APIs? Filesystem access limited to the declared workspace?
 
-Score each dimension 1-5 (1 = high risk, 5 = no risk).
-- Tier A minimum passing: 3.5 weighted average
-- Tier B minimum passing: 4.0 weighted average
-- Quality check: pass/fail (no partial credit)
+### Step 3 — Tier B additional dimensions (only for community / marketplace)
 
-## Output Format
+5. **Provenance** — Is the author identifiable? Is the skill used by others (signal of community vetting)? Source code available for inspection? Recently updated (signal of active maintenance)?
+6. **Dependency Risk** — External service dependencies declared? Any baked-in credentials? Network access requirements clear in the skill body?
+7. **Adversarial Testing** — How does the skill handle unexpected input? Potential to produce harmful or unsafe output? Documented edge cases?
+
+### Step 4 — Score each dimension 1–5
+
+- `1` = high risk, clear failure
+- `2` = significant concerns
+- `3` = mixed signals, judgment call
+- `4` = minor concerns
+- `5` = no concerns
+
+Compute a weighted average across all dimensions for the tier.
+
+### Step 5 — Issue the verdict
+
+- **APPROVED** — Tier A weighted avg ≥ 3.5; Tier B weighted avg ≥ 4.0; no CRITICAL findings.
+- **CONDITIONAL** — passing weighted average but at least one HIGH finding that has a documented fix the operator must apply pre-install.
+- **REJECTED** — weighted average below threshold, or any CRITICAL finding present, or skill cannot be fully evaluated (missing source, ambiguous scope, undocumented external calls).
+
+### Step 6 — Return the output in the format below
+
+## What to escalate
+
+Stop and ask the operator before issuing a verdict when:
+
+- The skill source is ambiguous (Tier A or Tier B unclear) — operator must declare.
+- A CRITICAL finding exists but the operator has business reasons to install anyway (the verdict is REJECTED; the override decision is the operator's, not this skill's).
+- The skill modifies its own behavior at runtime (self-rewriting, dynamic skill loading) — beyond standard audit scope.
+- The skill is in a locale this audit doesn't support (currently `en` only).
+- The skill references infrastructure (databases, callable agents, secret stores) that this audit cannot inspect from the SKILL.md alone — request the runtime context from the operator before scoring.
+
+## Output format
 
 ```
-QUALITY CHECK: PASS / FAIL
-  - [list specific issues if FAIL]
-
-SECURITY AUDIT: Tier A / Tier B
+TIER: A / B
+DIMENSION SCORES:
   - Prompt Injection: X/5
   - Data Exfiltration: X/5
   - Scope Creep: X/5
@@ -67,17 +108,27 @@ SECURITY AUDIT: Tier A / Tier B
   - Dependency Risk: X/5
   - Adversarial: X/5
 
+WEIGHTED AVERAGE: X.X / 5.0
+
+FINDINGS:
+  - [CRITICAL/HIGH/MEDIUM/LOW] [Dimension] Description → Recommended action
+
 VERDICT: APPROVED / CONDITIONAL / REJECTED
-Risk Score: X.X / 5.0
-Findings: [CRITICAL/HIGH/MEDIUM/LOW items]
-Conditions: [if CONDITIONAL]
+Conditions (if CONDITIONAL): [...]
+Rationale: [1-2 sentences]
 ```
 
 ## Constraints
 
-- Quality check MUST pass before security audit begins.
 - Default to REJECTED if the skill cannot be fully evaluated.
-- Never approve a skill with an unresolved CRITICAL finding.
-- Never skip Tier B for community/marketplace skills.
-- Re-audit required after any update to an approved skill.
-- Another auditor should reach the same conclusion from documented reasoning.
+- Never approve a skill with an unresolved CRITICAL finding — the operator can choose to override, but the audit verdict stands as REJECTED.
+- Never skip Tier B dimensions for community / marketplace skills.
+- Re-audit is required after any change to a previously approved skill.
+- Another auditor should reach the same conclusion from the same evidence — document reasoning per dimension, not just the final score.
+- Never run this audit on a skill that hasn't passed the automated SPEC compliance checker first.
+
+## References
+
+- `interface.yaml` — machine-readable capability surface
+- SPEC v1.2 §2.3 — operator-centric body section convention
+- Automated SPEC compliance checker — upstream gate that this skill assumes has passed
