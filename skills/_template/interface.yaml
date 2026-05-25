@@ -1,0 +1,44 @@
+name: <skill-name>
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Keep capability names short, dotted (namespace.action), and stable.
+exposes:
+  - capability: <namespace>.<action>
+    description: <One-line description of the capability>
+    parameters:
+      <param_name>:
+        type: string                # string | number | boolean | object | array
+        required: true
+        description: <What this parameter is>
+      # <optional_param>:
+      #   type: string
+      #   required: false
+      #   enum: [<allowed-value-1>, <allowed-value-2>]
+      #   default: <default-value>
+      #   description: <What this parameter is>
+    returns:
+      <return_field>:
+        type: string
+        description: <What this field contains>
+
+# What this skill consumes at runtime — environment context, secrets, files.
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]                       # add pt-BR if supported
+    description: Workspace locale
+  # access_token:
+  #   type: string
+  #   required: true
+  #   source: keychain               # see SPEC §3.2 for credential patterns
+  #   keychain_item: "<vault>/<item>/<field>"
+  #   description: <What the credential is for>
+
+# Capability flags — what each exposed capability actually supports today.
+# Useful for callers that need to feature-detect (e.g., supports_currency, supports_polling).
+capability_flags:
+  <namespace>.<action>:
+    # supports_<feature>: true|false
+    environment: <sandbox|production>

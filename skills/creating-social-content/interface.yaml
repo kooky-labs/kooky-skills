@@ -1,0 +1,90 @@
+name: creating-social-content
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow-archetype note: SPEC §3.1 examples are connector-shaped (request/response
+# against an external API). For a content-drafting workflow, "exposes" is the prompt
+# surface — what a caller can ask the skill to produce. See PILOT_LEARNINGS.md.
+exposes:
+  - capability: content.draft_social_post
+    description: Draft a platform-native social media post from a topic + platform target
+    parameters:
+      topic:
+        type: string
+        required: true
+        description: The thing the post is about — a decision, result, observation, or event
+      platform:
+        type: string
+        required: true
+        enum: [x-tweet, x-thread, linkedin, tiktok, instagram-reel]
+        description: Target platform — determines length, hook style, hashtags, and structure
+      pillar:
+        type: string
+        required: false
+        enum: [founders-journey, behind-the-scenes, case-study, hot-take]
+        default: founders-journey
+        description: Founder-voice content pillar (40/25/20/15 mix across these four)
+      audience_note:
+        type: string
+        required: false
+        description: Optional hint about the intended audience (e.g., "early-stage founders", "Anthropic partner team")
+      goal:
+        type: string
+        required: false
+        enum: [awareness, engagement, leads, community, recruiting]
+        description: Optional intent signal that shapes the CTA / closing line
+    returns:
+      post_text:
+        type: string
+        description: Ready-to-paste post body, formatted for the target platform
+      platform:
+        type: string
+        description: Echoes the input platform for downstream routing
+      char_count:
+        type: number
+        description: Character count of post_text (relevant for X — informational elsewhere)
+      hashtags:
+        type: array
+        description: Suggested hashtags (LinkedIn 3-5, Instagram 5-10, empty for X/TikTok)
+      engagement_notes:
+        type: string
+        description: Timing hint + reply strategy
+      follow_ups:
+        type: array
+        description: 1-3 suggested follow-up posts (for X threads or campaign continuity)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+  brand_voice_path:
+    type: string
+    required: false
+    description: Optional path to a brand-voice file the caller maintains (skill reads it for tone/topic boundaries)
+  audience_profile_path:
+    type: string
+    required: false
+    description: Optional path to a target-audience profile (skill reads it for context)
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  content.draft_social_post:
+    supports_platforms:
+      - x-tweet
+      - x-thread
+      - linkedin
+      - tiktok
+      - instagram-reel
+    supports_pillars:
+      - founders-journey
+      - behind-the-scenes
+      - case-study
+      - hot-take
+    supports_locales:
+      - en
+    supports_multi_platform_batch: false   # one platform per invocation; caller batches if needed
+    supports_image_generation: false       # text-only; image work belongs to a separate skill
+    supports_publishing: false             # drafting only; publishing is a separate connector skill
