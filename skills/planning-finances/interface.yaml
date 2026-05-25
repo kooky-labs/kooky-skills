@@ -1,0 +1,67 @@
+name: planning-finances
+version: 1.0.0
+
+exposes:
+  - capability: finance.produce_analysis
+    description: Produce structured financial analysis with ranges, assumptions, sensitivity, and trade-offs
+    parameters:
+      analysis_type:
+        type: string
+        required: true
+        enum: [budget_review, revenue_projection, cost_optimization, pricing_strategy]
+        description: Type of analysis — determines framework and output sections
+      financial_data:
+        type: object
+        required: true
+        description: Available data — revenue / costs / unit economics / competitive context as relevant
+      time_horizon:
+        type: string
+        required: false
+        enum: [3_months, 6_months, 1_year, 3_years]
+        default: 1_year
+        description: Projection / planning horizon
+      conservative_bias:
+        type: boolean
+        required: false
+        default: true
+        description: When true, flags optimistic assumptions explicitly
+    returns:
+      analysis_content:
+        type: string
+        description: The full structured analysis, formatted with tables
+      scenarios:
+        type: object
+        description: "{conservative, base, optimistic} for projections; null for other analysis types"
+      assumptions:
+        type: array
+        description: Each assumption stated explicitly with source / basis
+      sensitivity_analysis:
+        type: string
+        description: What changes if key assumptions are wrong
+      recommendations:
+        type: array
+        description: Each recommendation with trade-off analysis (impact / cost / risk)
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+
+capability_flags:
+  finance.produce_analysis:
+    supports_analysis_types:
+      - budget_review
+      - revenue_projection
+      - cost_optimization
+      - pricing_strategy
+    supports_time_horizons:
+      - 3_months
+      - 6_months
+      - 1_year
+      - 3_years
+    supports_locales:
+      - en
+    supports_legal_tax_advice: false      # escalates legal/tax questions
+    supports_execution: false             # analysis only; never transacts
+    supports_currency_conversion: false   # quote-currency assumed pre-normalized by caller

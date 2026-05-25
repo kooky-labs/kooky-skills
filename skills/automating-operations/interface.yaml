@@ -1,0 +1,57 @@
+name: automating-operations
+version: 1.0.0
+
+exposes:
+  - capability: operations.design_workflow
+    description: Map current-state workflow, classify automation potential per step, design target state, produce implementation plan
+    parameters:
+      process_name:
+        type: string
+        required: true
+        description: Name of the process being analyzed
+      current_state_description:
+        type: string
+        required: true
+        description: Description of how the process runs today (manual steps, handoffs, bottlenecks)
+      pain_points:
+        type: array
+        required: false
+        description: Specific pain points the automation should address
+      constraints:
+        type: array
+        required: false
+        description: Constraints — downtime tolerance, budget, regulatory, tooling
+    returns:
+      current_state_map:
+        type: object
+        description: Steps + handoffs + bottlenecks + delays mapped from current state
+      step_classifications:
+        type: array
+        description: Per-step classification (automate_fully / automate_with_oversight / human_in_loop / cannot_automate) with rationale
+      target_state_design:
+        type: object
+        description: Target workflow with triggers, handoffs, completion criteria, error handling per step
+      implementation_plan:
+        type: object
+        description: What to build, migration path, rollback plan, ownership
+      workflow_template:
+        type: object
+        description: "Populated template: {name, owner, trigger, frequency, sla, steps[]}"
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+
+capability_flags:
+  operations.design_workflow:
+    supports_classifications:
+      - automate_fully
+      - automate_with_oversight
+      - human_in_loop
+      - cannot_automate
+    supports_locales:
+      - en
+    supports_implementation: false        # design + plan only; execution downstream
+    supports_idempotency_verification: false  # idempotency is a design guideline; runtime verification downstream

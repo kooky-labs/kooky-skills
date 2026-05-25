@@ -1,0 +1,66 @@
+name: managing-customer-success
+version: 1.0.0
+
+exposes:
+  - capability: customer.manage_success
+    description: Manage onboarding (Day 1-30), support triage (P1-P4 SLAs), health checks, churn intervention
+    parameters:
+      operation:
+        type: string
+        required: true
+        enum: [onboarding, support_triage, health_check, churn_intervention]
+        description: CS lifecycle operation
+      client_context:
+        type: object
+        required: true
+        description: Client details — name, plan, usage history, engagement signals
+      day_in_lifecycle:
+        type: number
+        required: false
+        description: For onboarding, current day in Day-0 to Day-30 cycle
+      ticket:
+        type: object
+        required: false
+        description: For support_triage, the inbound support request
+      churn_signals:
+        type: array
+        required: false
+        description: For churn_intervention, observed signals (usage drop / no-login / unresolved tickets / sentiment)
+    returns:
+      result_type:
+        type: string
+        enum: [onboarding_plan, support_response, health_report, churn_intervention_plan]
+      result_content:
+        type: object
+        description: Operation-specific structured output
+      priority:
+        type: string
+        enum: [P1, P2, P3, P4, none]
+        description: For support_triage, the assigned priority (none for non-support operations)
+      sla_deadline:
+        type: string
+        description: For support_triage, response deadline based on priority
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+
+capability_flags:
+  customer.manage_success:
+    supports_operations:
+      - onboarding
+      - support_triage
+      - health_check
+      - churn_intervention
+    supports_priorities:
+      - P1
+      - P2
+      - P3
+      - P4
+    supports_locales:
+      - en
+    supports_contract_changes: false      # escalates to operator
+    supports_pricing_concessions: false   # escalates to operator
+    supports_feature_commitments: false   # requires product/engineering confirmation

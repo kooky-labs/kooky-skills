@@ -1,0 +1,59 @@
+name: researching-skills
+version: 1.0.0
+
+exposes:
+  - capability: skill.discover_candidates
+    description: Search external sources for candidate skills matching a capability gap; pre-screen for fit, compatibility, security
+    parameters:
+      capability_gap:
+        type: string
+        required: true
+        description: The capability needed (clear enough that an external skill could match it)
+      target_agents:
+        type: array
+        required: false
+        description: Agent codes that would use the skill (informs compatibility scoring)
+      sources:
+        type: array
+        required: false
+        default: [skills_sh, github, local_global]
+        description: Sources to search (subset of {skills_sh, github, local_global})
+      min_trust_level:
+        type: string
+        required: false
+        enum: [experimental, community, curated, official]
+        default: community
+        description: Minimum trust level to include in results
+    returns:
+      candidates:
+        type: array
+        description: "Ranked list of {name, source, install_count, description, source_url, fit_score, compatibility, security_flags[]}"
+      per_candidate_recommendation:
+        type: array
+        description: "Per candidate: {recommendation: adopt|adapt|skip, reasoning}"
+      no_match_alternatives:
+        type: array
+        description: Alternative search-term suggestions when no candidates match
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+
+capability_flags:
+  skill.discover_candidates:
+    supports_sources:
+      - skills_sh
+      - github
+      - local_global
+    supports_trust_levels:
+      - experimental
+      - community
+      - curated
+      - official
+    supports_locales:
+      - en
+    supports_installation: false         # discovery + pre-screening only
+    supports_deep_security_audit: false  # delegated to auditing-skill-security
+    supports_lifecycle_management: false # delegated to managing-skills

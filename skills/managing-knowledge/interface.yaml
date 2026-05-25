@@ -1,0 +1,61 @@
+name: managing-knowledge
+version: 1.0.0
+
+exposes:
+  - capability: knowledge.maintain_base
+    description: Evaluate sources, audit documentation health, run maintenance cadence, deprecate outdated content
+    parameters:
+      operation:
+        type: string
+        required: true
+        enum: [evaluate_source, audit_base, gap_analysis, deprecate]
+        description: Knowledge-management operation
+      source_or_base_path:
+        type: string
+        required: true
+        description: Path to the source being evaluated OR the knowledge base being audited
+      cadence_window:
+        type: string
+        required: false
+        enum: [daily, weekly, monthly, quarterly]
+        description: For audit_base / gap_analysis, the cadence window context
+    returns:
+      result_type:
+        type: string
+        enum: [source_evaluation, audit_report, gap_report, deprecation_plan]
+      result_content:
+        type: object
+        description: Operation-specific structured output
+      verdict:
+        type: string
+        enum: [INCLUDE, EXCLUDE, CONDITIONAL, none]
+        description: For evaluate_source operations only
+      dimension_scores:
+        type: object
+        description: For evaluate_source, weighted scores (authority/accuracy/currency/relevance/depth)
+      action_items:
+        type: array
+        description: Actions for the operator to take based on the result
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+
+capability_flags:
+  knowledge.maintain_base:
+    supports_operations:
+      - evaluate_source
+      - audit_base
+      - gap_analysis
+      - deprecate
+    supports_cadence_windows:
+      - daily
+      - weekly
+      - monthly
+      - quarterly
+    supports_locales:
+      - en
+    supports_permanent_deletion: false    # archive only; never delete
+    supports_authoring: false             # manages knowledge; does not write new content

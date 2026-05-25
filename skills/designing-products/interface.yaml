@@ -1,0 +1,68 @@
+name: designing-products
+version: 1.0.0
+
+exposes:
+  - capability: product.define_or_prioritize
+    description: Validate a problem, define scope, write user stories, prioritize backlog (ICE), or design user flows
+    parameters:
+      mode:
+        type: string
+        required: true
+        enum: [feature_definition, backlog_prioritization, user_stories, user_flow_design]
+        description: What this invocation produces
+      problem_or_request:
+        type: string
+        required: true
+        description: The product question being addressed (raw text)
+      evidence:
+        type: array
+        required: false
+        description: Evidence supporting the problem (user research, metrics, support tickets)
+      constraints:
+        type: array
+        required: false
+        description: Hard constraints — deadline, budget, technical, regulatory
+      candidate_items:
+        type: array
+        required: false
+        description: For backlog_prioritization, the list of items to score with ICE
+    returns:
+      problem_statement:
+        type: string
+        description: Validated problem statement (always present; never skipped)
+      solution_or_stories:
+        type: object
+        description: Mode-specific structured output (feature spec / stories / prioritized backlog / flow diagram)
+      scope:
+        type: object
+        description: "{must_have, should_have, won't_have}"
+      success_criteria:
+        type: object
+        description: "{metric, target_change, timeline}"
+      size_estimate:
+        type: string
+        enum: [small, medium, large]
+        description: Never a time estimate
+      dependencies:
+        type: array
+      risks:
+        type: array
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+
+capability_flags:
+  product.define_or_prioritize:
+    supports_modes:
+      - feature_definition
+      - backlog_prioritization
+      - user_stories
+      - user_flow_design
+    supports_locales:
+      - en
+    supports_time_estimates: false        # size_estimate only; time estimates banned
+    supports_implementation: false        # specs only; implementation downstream
+    supports_user_research: false         # uses provided evidence; does not conduct research

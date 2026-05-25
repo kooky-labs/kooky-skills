@@ -1,0 +1,70 @@
+name: managing-skills
+version: 1.0.0
+
+exposes:
+  - capability: skill.manage_lifecycle
+    description: Lifecycle operations on installed skills (install / recommend / audit / search / remove); coordinates discovery + security gate
+    parameters:
+      operation:
+        type: string
+        required: true
+        enum: [install, recommend, audit, search, remove]
+        description: Lifecycle operation
+      skill_identifier:
+        type: string
+        required: false
+        description: Skill name or source URL (required for install / remove; optional for recommend / search)
+      target_agents:
+        type: array
+        required: false
+        description: Agent codes the operation applies to
+      capability_gap:
+        type: string
+        required: false
+        description: For search / recommend, the gap being filled (skill delegates discovery to researching-skills)
+      tier:
+        type: string
+        required: false
+        enum: [A, B]
+        description: Required for install — tier classification per auditing-skill-security
+    returns:
+      result_type:
+        type: string
+        enum: [install_report, recommendation, audit_report, search_results, removal_report]
+      result_content:
+        type: object
+        description: Operation-specific structured output
+      registry_change:
+        type: object
+        description: Description of registry update (added / removed / modified entries)
+      verification_status:
+        type: string
+        enum: [verified, failed, partial]
+        description: Post-operation verification result
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+  skill_registry:
+    type: capability
+    required: true
+    description: Persistent registry tracking installed skills per agent — see SKILL.md requires
+
+capability_flags:
+  skill.manage_lifecycle:
+    supports_operations:
+      - install
+      - recommend
+      - audit
+      - search
+      - remove
+    supports_tiers:
+      - A
+      - B
+    supports_locales:
+      - en
+    supports_discovery: false             # delegated to researching-skills
+    supports_security_audit: false        # delegated to auditing-skill-security
+    supports_bulk_operations: false       # one skill per invocation

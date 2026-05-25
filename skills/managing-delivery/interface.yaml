@@ -1,0 +1,60 @@
+name: managing-delivery
+version: 1.0.0
+
+exposes:
+  - capability: delivery.manage_project
+    description: Track client project delivery across 4 phases (kickoff / execution / review_qa / go_live); produce trackers, blocker reports, handoff documents
+    parameters:
+      phase:
+        type: string
+        required: true
+        enum: [kickoff, execution, review_qa, go_live]
+        description: Current delivery phase — determines output shape
+      project_context:
+        type: object
+        required: true
+        description: Project details — client, scope, deliverables, timeline, assigned agents
+      current_state:
+        type: object
+        required: false
+        description: For execution / review_qa phases, current milestone status + open blockers
+      handoff_source:
+        type: string
+        required: false
+        enum: [sales, none]
+        description: For kickoff, where the project came from (informs handoff protocol)
+    returns:
+      tracker:
+        type: object
+        description: "Project tracker: {milestones, owners, due_dates, status, notes}"
+      blockers:
+        type: array
+        description: "{impact, owner, eta} per blocker"
+      risks:
+        type: array
+        description: "{likelihood, impact, mitigation} per risk"
+      next_actions:
+        type: array
+        description: "{owner, deadline, description} per action"
+      handoff_document:
+        type: object
+        description: Phase-boundary handoff (populated only at phase transitions)
+
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+
+capability_flags:
+  delivery.manage_project:
+    supports_phases:
+      - kickoff
+      - execution
+      - review_qa
+      - go_live
+    supports_locales:
+      - en
+    supports_execution: false             # tracks + coordinates; does not execute agent work
+    supports_billing: false               # delivery tracking only; billing belongs to a separate skill
+    supports_contract_negotiation: false  # operates on agreed contracts; renegotiation escalates
