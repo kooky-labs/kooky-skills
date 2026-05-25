@@ -1,0 +1,88 @@
+name: conducting-outreach
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface. The `consumes` block
+# accepts the output shape of `qualifying-leads.sales.qualify_lead` directly
+# (qualification_tier, prospect_data, key_observations) for the explicit
+# capability handoff between the two MAVERICK skills.
+exposes:
+  - capability: sales.draft_outreach_message
+    description: Draft a personalized outreach message (LinkedIn / email / follow-up / breakup) for a specific prospect
+    parameters:
+      format:
+        type: string
+        required: true
+        enum: [linkedin_connection, linkedin_dm, cold_email, follow_up_1, follow_up_2, breakup]
+        description: Message format — determines framework, length budget, and tone
+      prospect_data:
+        type: object
+        required: true
+        description: Prospect details (name, title, company, situation, pain signals, ICP match reason). Accepts the `prospect_data` shape returned by `qualifying-leads`.
+      qualification_tier:
+        type: string
+        required: false
+        enum: [hot, warm, cool, cold]
+        description: Tier from `qualifying-leads`. When provided, sets message intensity (hot=direct ask; warm=lighter; cool=content offer; cold=usually skip).
+      key_observations:
+        type: array
+        required: false
+        description: Observations from `qualifying-leads` — used for opening lines and personalization hooks
+      desired_outcome:
+        type: string
+        required: false
+        enum: [meeting, reply, content_consumption, awareness]
+        default: reply
+        description: What the message should optimize for — shapes CTA
+      previous_messages:
+        type: array
+        required: false
+        description: For follow-up formats, the prior messages in the sequence (skill avoids repeating angles)
+    returns:
+      message:
+        type: string
+        description: Ready-to-send message body, formatted for the target channel
+      format:
+        type: string
+        description: Echoes the input format for downstream routing
+      char_count:
+        type: number
+        description: Character count of message (relevant for LinkedIn formats and cold_email subject line)
+      personalization_notes:
+        type: array
+        description: 2-4 bullets explaining what was customized and why
+      suggested_follow_up_timing:
+        type: string
+        description: When to send the next message in the sequence (e.g., "3-4 days from now")
+      alternative_subject_lines:
+        type: array
+        description: 2-3 subject-line variants (only populated for cold_email; empty for LinkedIn formats)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+  voice_profile_path:
+    type: string
+    required: false
+    description: Optional path to the operator's voice profile (skill reads it for tone calibration)
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  sales.draft_outreach_message:
+    supports_formats:
+      - linkedin_connection
+      - linkedin_dm
+      - cold_email
+      - follow_up_1
+      - follow_up_2
+      - breakup
+    supports_locales:
+      - en
+    supports_tier_aware_intensity: true   # uses qualification_tier when present
+    supports_batch_drafting: false        # one prospect per invocation; mass outreach by design out of scope
+    supports_sending: false               # drafting only; sending is a separate connector skill
+    supports_link_attachment: false       # no links/attachments in first-touch LinkedIn DMs per constraints

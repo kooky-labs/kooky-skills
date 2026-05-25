@@ -1,0 +1,77 @@
+name: qualifying-leads
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface. The `returns` schema
+# matches what `conducting-outreach` consumes: explicit capability handoff
+# between the two MAVERICK skills.
+exposes:
+  - capability: sales.qualify_lead
+    description: Score an incoming lead across 5 weighted dimensions, assign tier, and recommend next actions
+    parameters:
+      lead_data:
+        type: object
+        required: true
+        description: Available lead data — name, title, company, industry, size, engagement history, stated need, source channel
+      icp_profile_path:
+        type: string
+        required: false
+        description: Optional path to an ICP profile file the caller maintains (skill reads it for dimension-1 scoring)
+      weights_override:
+        type: object
+        required: false
+        description: Optional override of the default 30/25/20/15/10 dimension weights (sum must equal 100)
+    returns:
+      qualification_tier:
+        type: string
+        enum: [hot, warm, cool, cold]
+        description: Tier classification — consumed by `conducting-outreach` to set message intensity
+      weighted_score:
+        type: number
+        description: Weighted total 1.0-5.0
+      dimension_scores:
+        type: object
+        description: Object keyed by dimension (profile_fit / intent_signal / budget_likelihood / timing / engagement_quality) with score + rationale
+      prospect_data:
+        type: object
+        description: Normalized prospect data — consumed by `conducting-outreach` for personalization
+      key_observations:
+        type: array
+        description: 3-5 bullets summarizing the most relevant facts — consumed by `conducting-outreach` for opening lines
+      recommended_actions:
+        type: object
+        description: {primary, secondary} — specific next moves
+      information_gaps:
+        type: array
+        description: Explicit list of missing data with how-to-fill suggestions
+      competitor_mentions:
+        type: array
+        description: Any competitor names surfaced in the lead data (empty when none)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  sales.qualify_lead:
+    supports_tiers:
+      - hot
+      - warm
+      - cool
+      - cold
+    supports_dimensions:
+      - profile_fit
+      - intent_signal
+      - budget_likelihood
+      - timing
+      - engagement_quality
+    supports_locales:
+      - en
+    supports_weights_override: true       # operator can adjust per campaign
+    supports_batch_qualification: false   # one lead per invocation
+    supports_outreach_invocation: false   # qualification only; conducting-outreach is the next step
