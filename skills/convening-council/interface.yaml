@@ -1,0 +1,103 @@
+name: convening-council
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow protocol — uses runtime infrastructure (callable_agents, decisions
+# table, plan_actions table) declared in SKILL.md `requires:`. The `exposes`
+# block describes the prompt surface a caller invokes; the skill drives the
+# multi-agent protocol underneath.
+exposes:
+  - capability: governance.convene_council
+    description: Run the multi-agent council protocol for a high-stakes decision; writes one row to the decisions table
+    parameters:
+      question:
+        type: string
+        required: true
+        description: The decision to make, framed in one sentence with context but without leading language
+      category:
+        type: string
+        required: true
+        enum: [architectural, security, strategic, multi_domain]
+        description: Decision category — drives default panel composition
+      panel_agents:
+        type: array
+        required: true
+        description: 2-4 agent codes for the proposal panel (e.g., ["JARVIS", "WATSON", "MAVERICK"])
+      red_team_agent:
+        type: string
+        required: false
+        description: Agent to run the adversarial counter pass; defaults to WATSON (or JARVIS if WATSON is in the panel)
+      routes_to_approval:
+        type: boolean
+        required: false
+        default: false
+        description: When true, the decision row routes to the operator Approvals queue rather than implementing directly
+      context:
+        type: string
+        required: false
+        description: Additional context all panelists receive verbatim
+    returns:
+      decision_id:
+        type: string
+        description: Identifier of the row written to the decisions table
+      title:
+        type: string
+        description: Short name for the decision
+      decision:
+        type: string
+        description: The chosen path, one paragraph
+      rationale:
+        type: string
+        description: Why this over alternatives
+      alternatives:
+        type: array
+        description: Each option considered + why rejected
+      strongest_objection:
+        type: string
+        description: The adversarial counter-argument, verbatim (must be populated)
+      decided_by:
+        type: string
+        description: "council:<comma-separated agent codes>"
+      protocol:
+        type: string
+        enum: [council, adversarial]
+        description: Protocol shape used
+      routes_to_approval:
+        type: boolean
+        description: Whether the decision is awaiting operator approval
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+  callable_agents:
+    type: capability
+    required: true
+    description: Runtime ability to invoke other agents in parallel — see SKILL.md requires
+  decisions_table:
+    type: capability
+    required: true
+    description: Persistent storage for decision rows — see SKILL.md requires
+  plan_actions_table:
+    type: capability
+    required: true
+    description: Append-only log for council_response events — see SKILL.md requires
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  governance.convene_council:
+    supports_categories:
+      - architectural
+      - security
+      - strategic
+      - multi_domain
+    supports_panel_size_range: [2, 4]   # min, max
+    supports_locales:
+      - en
+    supports_parallel_proposals: true   # via callable_agents
+    supports_rebuttal_round: true       # one round only
+    supports_retry: false               # councils do not re-run; diagnose if the first pass was bad
+    supports_implementation: false      # council decides; implementation is downstream

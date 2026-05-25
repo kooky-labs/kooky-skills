@@ -1,0 +1,91 @@
+name: delegating-tasks
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface (what a caller can ask
+# the skill to produce), not an HTTP endpoint. Returns a delegation specification;
+# does not execute the delegation.
+exposes:
+  - capability: orchestration.delegate_task
+    description: Classify an incoming request and return a delegation specification — primary agent, supporting agents, task definition, handoff sequence
+    parameters:
+      request:
+        type: string
+        required: true
+        description: The incoming request to classify and route (the raw user/agent input)
+      requester_context:
+        type: string
+        required: false
+        description: Optional context about who/what is making the request and why
+      urgency:
+        type: string
+        required: false
+        enum: [now, today, this_week]
+        default: today
+        description: Time pressure on the delegation — shapes handoff cadence and parallelism
+      max_agents:
+        type: number
+        required: false
+        default: 3
+        description: Cap on agents in the chain (default 3; values above require operator approval per skill constraints)
+    returns:
+      primary_agent:
+        type: string
+        description: Agent code (e.g., HOUDINI, JARVIS) responsible for the work
+      supporting_agents:
+        type: array
+        description: Agent codes that contribute or hand off (empty for single-agent delegations)
+      task_definition:
+        type: string
+        description: The specific task statement for the primary agent
+      inputs:
+        type: array
+        description: List of inputs the primary agent needs
+      expected_output:
+        type: string
+        description: What "done" looks like
+      urgency:
+        type: string
+        enum: [now, today, this_week]
+        description: Echoes the input urgency for downstream routing
+      handoff_sequence:
+        type: array
+        description: For multi-agent delegations, ordered list of agent codes representing the handoff chain (empty for single-agent)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+  routing_table_path:
+    type: string
+    required: false
+    description: Optional override path to a routing table file; defaults to the table embedded in SKILL.md
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  orchestration.delegate_task:
+    supports_agents:
+      - HOUDINI
+      - MAVERICK
+      - WATSON
+      - JARVIS
+      - LEONARDO
+      - SHERLOCK
+      - ALFRED
+      - SCOTTY
+      - SAM
+      - FINN
+      - TANK
+      - DEWEY
+    supports_urgencies:
+      - now
+      - today
+      - this_week
+    supports_locales:
+      - en
+    supports_max_chain_length: 3        # default cap; operator can override
+    supports_execution: false           # produces the delegation spec only; does not invoke agents
+    supports_parallel_handoffs: false   # sequential chains only in current shape

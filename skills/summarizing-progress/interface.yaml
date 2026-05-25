@@ -1,0 +1,75 @@
+name: summarizing-progress
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface, not an HTTP endpoint.
+# Returns structured executive-level reports; does not gather raw activity data.
+exposes:
+  - capability: reporting.generate_summary
+    description: Generate an executive-level progress report (daily / weekly / project status) from activity data and open items
+    parameters:
+      report_type:
+        type: string
+        required: true
+        enum: [daily_briefing, weekly_summary, project_status]
+        description: Report shape — determines length budget, sections, and tone
+      time_period:
+        type: string
+        required: true
+        description: Time window covered (e.g., "2026-05-24", "week of 2026-05-19", "Sprint 7")
+      activity_data:
+        type: string
+        required: true
+        description: Raw activity data the report summarizes (commits, completed tasks, agent outputs, milestones)
+      open_items:
+        type: array
+        required: false
+        description: List of in-progress items, blockers, or pending decisions
+      audience:
+        type: string
+        required: false
+        description: Who the report is for (operator, stakeholder, client, cross-functional team) — shapes framing
+      scope:
+        type: string
+        required: false
+        description: Optional scope filter (department, project, agent) — narrows the summary
+    returns:
+      report_content:
+        type: string
+        description: The formatted report ready to share, matching the requested type
+      blockers:
+        type: array
+        description: Identified blockers with context to unblock each one
+      decisions_needed:
+        type: array
+        description: Decisions the audience needs to make, with context to decide
+      attribution_table:
+        type: object
+        description: Map of work-items to the agent/person who did them
+      next_actions:
+        type: array
+        description: Clear next actions surfaced at the report's close
+      missing_data_flags:
+        type: array
+        description: Departments / areas where activity data was missing (rather than guessing)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  reporting.generate_summary:
+    supports_types:
+      - daily_briefing
+      - weekly_summary
+      - project_status
+    supports_locales:
+      - en
+    supports_data_gathering: false      # caller passes activity_data in; this skill doesn't fetch
+    supports_distribution: false        # generates the report; does not send/post it
+    supports_forecasting: false         # progress reporting only, not forward-looking planning
