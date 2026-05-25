@@ -1,0 +1,85 @@
+name: building-integrations
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface. Returns a complete
+# integration package (code + schemas + tests + docs); deployment is a
+# downstream operator action.
+exposes:
+  - capability: integration.build_mcp_server
+    description: Build a complete MCP server integration for an external service with tools, schemas, error handling, security, and tests
+    parameters:
+      service_name:
+        type: string
+        required: true
+        description: External service being integrated (e.g., "Stripe", "Linear API", "GitHub")
+      required_actions:
+        type: array
+        required: true
+        description: List of actions agents need (e.g., ["create-invoice", "list-customers", "refund-charge"])
+      consuming_agents:
+        type: array
+        required: true
+        description: Agent codes that will call this integration (informs scope + naming)
+      auth_method:
+        type: string
+        required: true
+        enum: [api_key, oauth2, basic_auth, jwt, none]
+        description: Authentication method for the external service
+      design_adr:
+        type: object
+        required: false
+        description: Optional ADR from `designing-architecture` documenting the architectural decision this implementation follows
+      runtime_target:
+        type: string
+        required: false
+        enum: [python, node, go]
+        default: python
+        description: Target runtime for the integration server
+    returns:
+      file_tree:
+        type: string
+        description: Directory structure of the integration package
+      files:
+        type: array
+        description: List of {path, content} for every file in the package
+      configuration:
+        type: object
+        description: Required env vars, secrets, allowlisted URLs, runtime configuration
+      test_instructions:
+        type: string
+        description: How to run the test suite
+      deployment_notes:
+        type: string
+        description: Deployment + scaling guidance
+      security_checklist:
+        type: array
+        description: Security standards applied (credentials, allowlist, audit logging, idempotency, etc.)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  integration.build_mcp_server:
+    supports_runtimes:
+      - python
+      - node
+      - go
+    supports_auth_methods:
+      - api_key
+      - oauth2
+      - basic_auth
+      - jwt
+      - none
+    supports_locales:
+      - en
+    supports_deployment: false           # produces the package; deployment is operator action
+    supports_secret_provisioning: false  # secret setup is operator's responsibility
+    supports_runtime_monitoring: false   # logging + audit hooks defined; observability infrastructure is downstream
+    supports_stateful_sessions: false    # MCP request/response only; stateful sessions need a different surface

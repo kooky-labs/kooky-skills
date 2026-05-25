@@ -1,0 +1,71 @@
+name: designing-architecture
+version: 1.0.0
+
+# What capabilities this skill exposes to others.
+# Workflow archetype — "exposes" is the prompt surface. Returns an ADR +
+# system design; implementation happens downstream (often via
+# `building-integrations` for MCP integrations).
+exposes:
+  - capability: architecture.design_and_document
+    description: Evaluate technical approaches on 6 dimensions and produce an ADR + system design recommendation
+    parameters:
+      problem_statement:
+        type: string
+        required: true
+        description: What needs to be built or changed, defined precisely (not the high-level goal)
+      hard_constraints:
+        type: array
+        required: true
+        description: Non-negotiables — budget, latency, deadline, compliance, integration boundaries
+      current_state:
+        type: string
+        required: false
+        description: Description of the current system / approach being changed (if any)
+      candidate_options:
+        type: array
+        required: false
+        description: Optional pre-identified options to evaluate; skill adds more if fewer than 3 supplied
+      time_horizon:
+        type: string
+        required: false
+        enum: [6_months, 1_year, 3_years]
+        default: 1_year
+        description: Time horizon for cost + scalability evaluation
+    returns:
+      adr:
+        type: object
+        description: "Architecture Decision Record: {status, context, decision, options_considered[], consequences{positive, negative}}"
+      recommendation:
+        type: string
+        description: One-paragraph recommendation with reasoning
+      options_evaluated:
+        type: array
+        description: All options with per-dimension scores (complexity / cost / speed / scalability / reversibility / dependencies) + rejection reasoning where not chosen
+      system_design:
+        type: object
+        description: "Component diagram + data flow + API contracts + error handling + monitoring approach"
+      build_vs_buy_analysis:
+        type: string
+        description: When relevant, the build-vs-buy reasoning (empty when not applicable)
+
+# What this skill consumes at runtime
+consumes:
+  locale:
+    type: string
+    required: true
+    enum: [en]
+    description: Currently English-only
+
+# Capability flags — what the exposed capabilities actually support today
+capability_flags:
+  architecture.design_and_document:
+    supports_time_horizons:
+      - 6_months
+      - 1_year
+      - 3_years
+    supports_locales:
+      - en
+    supports_implementation: false       # design only; implementation is downstream
+    supports_cost_modeling: false        # cost evaluation is qualitative; quantitative modeling out of scope
+    supports_diagram_generation: false   # diagrams described in text; rendering is downstream
+    supports_adr_persistence: false      # returns ADR content; caller commits it to repo
